@@ -7,13 +7,22 @@
 # an unsigned bundle. macOS then refuses to launch it — "Launchd job spawn
 # failed" — and the freshly built app appears simply broken.
 #
-# Installs to ~/Applications by default, which needs no administrator rights.
-# Set DEST=/Applications to install system-wide; that path needs a password.
+# macOS 27 assessment mode needs Ice at /Applications/Ice.app. Older releases
+# continue to use ~/Applications by default.
 #
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DEST="${DEST:-$HOME/Applications}"
+MACOS_MAJOR="$(sw_vers -productVersion | cut -d. -f1)"
+if (( MACOS_MAJOR >= 27 )); then
+    DEST="${DEST:-/Applications}"
+    if [[ "$DEST" != /Applications ]]; then
+        echo "error: macOS 27 requires DEST=/Applications for icon hiding" >&2
+        exit 1
+    fi
+else
+    DEST="${DEST:-$HOME/Applications}"
+fi
 DERIVED="${DERIVED:-/tmp/ice-build}"
 
 echo "==> Building"

@@ -3,6 +3,7 @@
 //  Ice
 //
 
+import AppKit
 import SwiftUI
 
 struct MenuBarLayoutSettingsPane: View {
@@ -14,7 +15,9 @@ struct MenuBarLayoutSettingsPane: View {
     }
 
     var body: some View {
-        if !ScreenCapture.cachedCheckPermissions() {
+        if #available(macOS 27.0, *), !Concealer27.isInstalledInApplications {
+            installationRequired
+        } else if !ScreenCapture.cachedCheckPermissions() {
             missingScreenRecordingPermissions
         } else if appState.menuBarManager.isMenuBarHiddenBySystemUserDefaults {
             cannotArrange
@@ -24,6 +27,21 @@ struct MenuBarLayoutSettingsPane: View {
                 layoutBars
             }
         }
+    }
+
+    @ViewBuilder
+    private var installationRequired: some View {
+        VStack(spacing: 12) {
+            Text("Move Ice to the Applications folder and reopen it to hide menu bar items on macOS 27.")
+                .font(.title3)
+                .multilineTextAlignment(.center)
+
+            Button("Show Ice in Finder") {
+                NSWorkspace.shared.activateFileViewerSelecting([Bundle.main.bundleURL])
+            }
+            .buttonStyle(.link)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
 
     @ViewBuilder

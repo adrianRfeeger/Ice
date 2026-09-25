@@ -17,6 +17,12 @@ import OSLog
 @available(macOS 27.0, *)
 @MainActor
 final class Concealer27 {
+    /// Assessment mode can conceal Ice's own controls when its bundle is run
+    /// outside the system Applications folder. Keep the controls reachable.
+    static var isInstalledInApplications: Bool {
+        Bundle.main.bundleURL.resolvingSymlinksInPath().standardizedFileURL.path == "/Applications/Ice.app"
+    }
+
     private let controller = ConcealmentController27(backend: MenuBarAssessmentAssertion27())
     private let logger = Logger(category: "Concealer27")
     private weak var appState: AppState?
@@ -49,6 +55,10 @@ final class Concealer27 {
 
     func performSetup(with appState: AppState) {
         self.appState = appState
+        guard Self.isInstalledInApplications else {
+            logger.error("Menu bar concealment requires Ice to run from /Applications/Ice.app")
+            return
+        }
         guard MenuBarAssessmentAssertion27.isAvailable else {
             logger.error("MenuBarClientCore assertions are unavailable, so items will not be hidden")
             return
@@ -101,7 +111,7 @@ final class Concealer27 {
 
     /// Derives what to conceal from Ice's sections and applies it.
     func update() {
-        guard let appState, MenuBarAssessmentAssertion27.isAvailable else {
+        guard let appState, Self.isInstalledInApplications, MenuBarAssessmentAssertion27.isAvailable else {
             return
         }
         if let suspendedUntil, ContinuousClock.now < suspendedUntil {
