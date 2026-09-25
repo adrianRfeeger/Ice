@@ -14,6 +14,11 @@ enum ScreenCapture {
     /// Returns a Boolean value that indicates whether the app has screen
     /// capture permissions.
     static func checkPermissions() -> Bool {
+        // Window titles are not a reliable permission signal on macOS 27.
+        // Ask the system for the current authorization state instead.
+        if #available(macOS 27.0, *) {
+            return CGPreflightScreenCaptureAccess()
+        }
         for windowID in Bridging.getMenuBarWindowList(option: [.itemsOnly, .activeSpace]) {
             guard
                 let window = WindowInfo(windowID: windowID),
@@ -23,8 +28,7 @@ enum ScreenCapture {
             }
             return window.title != nil
         }
-        // CGPreflightScreenCaptureAccess() only returns an initial value,
-        // but we can use it as a fallback.
+        // Preserve the older window-list check on earlier macOS releases.
         return CGPreflightScreenCaptureAccess()
     }
 
@@ -35,6 +39,11 @@ enum ScreenCapture {
     /// calls. Pass `true` to the `reset` parameter to replace the cached
     /// result with a newly computed value.
     static func cachedCheckPermissions(reset: Bool = false) -> Bool {
+        // macOS 27 can change this authorization while Ice is running. The
+        // system preflight is inexpensive and should always reflect its state.
+        if #available(macOS 27.0, *) {
+            return checkPermissions()
+        }
         enum Context {
             static var cachedResult: Bool?
         }
