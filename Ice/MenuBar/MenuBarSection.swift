@@ -103,6 +103,16 @@ final class MenuBarSection {
 
     /// A Boolean value that indicates whether the section is enabled.
     var isEnabled: Bool {
+        if #available(macOS 27.0, *) {
+            // The dividers take no space on macOS 27. MenuBarAgent may report
+            // them as unavailable even though the saved sections still work.
+            switch name {
+            case .visible, .hidden:
+                return true
+            case .alwaysHidden:
+                return appState?.settings.advanced.enableAlwaysHiddenSection ?? false
+            }
+        }
         if case .visible = name {
             // The visible section should always be enabled.
             return true
@@ -153,9 +163,7 @@ final class MenuBarSection {
             return
         }
 
-        guard controlItem.isAddedToMenuBar else {
-            // The section is disabled.
-            // TODO: Can we use isEnabled for this check?
+        guard isEnabled else {
             return
         }
 

@@ -74,9 +74,16 @@ final class IceBarPanel: NSPanel {
             }
             .store(in: &c)
 
-        if let controlItem = appState?.menuBarManager.controlItem(withName: .hidden) {
-            // Use the hidden control item's frame to determine if the menu bar
-            // is hidden. Hide the panel if so.
+        let controlName: MenuBarSection.Name
+        if #available(macOS 27.0, *) {
+            // The hidden divider can have no window on macOS 27. Follow the
+            // visible Ice icon so opening the Ice Bar does not close it again.
+            controlName = .visible
+        } else {
+            controlName = .hidden
+        }
+        if let controlItem = appState?.menuBarManager.controlItem(withName: controlName) {
+            // Use the control item's frame to determine if the menu bar is hidden.
             controlItem.$frame
                 .combineLatest(controlItem.$screen)
                 .throttle(for: 0.1, scheduler: DispatchQueue.main, latest: true)
@@ -86,7 +93,9 @@ final class IceBarPanel: NSPanel {
                     }
 
                     guard let frame, let screen else {
-                        hide()
+                        if #unavailable(macOS 27.0) {
+                            hide()
+                        }
                         return
                     }
 
