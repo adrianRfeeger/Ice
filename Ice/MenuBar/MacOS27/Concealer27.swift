@@ -258,6 +258,16 @@ final class Concealer27 {
         showTemporarily(bundleIDs: CollectionOfOne(bundleID))
     }
 
+    /// Waits for MenuBarAgent to accept the allowance and draw the item before
+    /// a click is sent to its reported frame.
+    func showTemporarilyForClick(bundleID: String) async {
+        showTemporarily(bundleID: bundleID)
+        await applyTask?.value
+        // A shown item has taken 0.4–0.6 s to appear after its application was
+        // allowed on macOS 27. The animation starts after the assertion applies.
+        try? await Task.sleep(for: .milliseconds(600))
+    }
+
     /// Ends one ``showTemporarily(bundleID:)``.
     func endTemporaryShow(bundleID: String) {
         endTemporaryShow(bundleIDs: CollectionOfOne(bundleID))

@@ -38,9 +38,7 @@ enum ItemClicker27 {
         }
 
         let concealer = appState.concealer27
-        concealer.showTemporarily(bundleID: bundleID)
-        // A shown item is drawn 0.4–0.6 s after its application is allowed (measured).
-        try? await Task.sleep(for: .milliseconds(600))
+        await concealer.showTemporarilyForClick(bundleID: bundleID)
 
         let ownerPID = item.ownerPID
         let baseline = Set(windowOwners().map { $0.number })
